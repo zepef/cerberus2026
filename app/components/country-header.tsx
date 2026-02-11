@@ -1,17 +1,35 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import type { CountryData } from "@/app/lib/types";
+import type { CountryData, EntitySummary } from "@/app/lib/types";
 
 interface CountryHeaderProps {
   country: CountryData;
+  entityProfiles?: EntitySummary[];
 }
 
-export function CountryHeader({ country }: CountryHeaderProps) {
+export function CountryHeader({ country, entityProfiles = [] }: CountryHeaderProps) {
   // Count statuses
   const statusCounts = new Map<string, number>();
   for (const c of country.cases) {
     statusCounts.set(c.status, (statusCounts.get(c.status) ?? 0) + 1);
+  }
+
+  // Build lookup: normalized entity name → slug for linkable pills
+  const entityNameToSlug = new Map<string, string>();
+  for (const ep of entityProfiles) {
+    entityNameToSlug.set(ep.name.toLowerCase(), ep.slug);
+  }
+
+  function findEntitySlug(entityText: string): string | null {
+    // Try matching the entity text against known entity names
+    const lower = entityText.toLowerCase();
+    for (const [name, slug] of entityNameToSlug) {
+      if (lower.includes(name) || name.includes(lower)) {
+        return slug;
+      }
+    }
+    return null;
   }
 
   return (
@@ -80,14 +98,28 @@ export function CountryHeader({ country }: CountryHeaderProps) {
               Key Entities
             </p>
             <div className="flex flex-wrap gap-2">
-              {country.keyEntities.slice(0, 8).map((entity, i) => (
-                <span
-                  key={i}
-                  className="inline-block rounded-full bg-white/5 px-3 py-1 text-xs text-zinc-300"
-                >
-                  {entity}
-                </span>
-              ))}
+              {country.keyEntities.slice(0, 8).map((entity, i) => {
+                const slug = findEntitySlug(entity);
+                if (slug) {
+                  return (
+                    <Link
+                      key={i}
+                      href={`/entity/${slug}`}
+                      className="inline-block rounded-full bg-white/5 px-3 py-1 text-xs text-zinc-300 transition-colors hover:bg-white/10 hover:text-orange-400"
+                    >
+                      {entity}
+                    </Link>
+                  );
+                }
+                return (
+                  <span
+                    key={i}
+                    className="inline-block rounded-full bg-white/5 px-3 py-1 text-xs text-zinc-300"
+                  >
+                    {entity}
+                  </span>
+                );
+              })}
             </div>
           </div>
         )}

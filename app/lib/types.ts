@@ -44,3 +44,87 @@ export interface CountrySummary {
   isoA2: string;
   caseCount: number;
 }
+
+export type EntityType = "individual" | "company" | "foreign-state" | "organization";
+
+export type EntityStatus =
+  | "convicted"
+  | "on-trial"
+  | "under-investigation"
+  | "sanctioned"
+  | "exposed"
+  | "acquitted"
+  | "active"
+  | "dissolved"
+  | "unknown";
+
+export interface EntityConnection {
+  targetSlug: string;
+  targetName: string;
+  relationship: string;
+  resolved: boolean;
+}
+
+export interface EntityCaseReference {
+  title: string;
+  countrySlug: string | null;
+  description: string | null;
+}
+
+export interface EntityData {
+  slug: string;
+  type: EntityType;
+  name: string;
+  countrySlug: string;
+  countryName: string;
+  status: EntityStatus;
+  role: string | null;
+  party: string | null;
+  birthDate: string | null;
+  biography: string[];
+  cases: EntityCaseReference[];
+  connections: EntityConnection[];
+  sources: string[];
+  initials: string;
+  rawMarkdown: string;
+}
+
+export interface EntitySummary {
+  slug: string;
+  type: EntityType;
+  name: string;
+  countrySlug: string;
+  countryName: string;
+  status: EntityStatus;
+  role: string | null;
+  initials: string;
+  connectionCount: number;
+  caseCount: number;
+}
+
+export interface GraphNode {
+  id: string;
+  name: string;
+  type: EntityType;
+  status: EntityStatus;
+  countrySlug: string;
+  initials: string;
+}
+
+export interface GraphEdge {
+  source: string;
+  target: string;
+  relationship: string;
+}
+
+export interface GraphData {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+}
+
+export interface EntityDataset {
+  entities: EntityData[];
+  totalEntities: number;
+  graphData: GraphData;
+  generatedAt: string;
+}

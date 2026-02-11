@@ -17,6 +17,35 @@ export const ZERO_CASE_FILL = "#fef3c7"; // warm cream
 export const STROKE_DEFAULT = "rgba(255, 255, 255, 0.2)";
 export const STROKE_HOVER = "rgba(255, 255, 255, 0.6)";
 
+// Entity type colors for avatars and graph nodes
+export const ENTITY_TYPE_COLORS: Record<string, string> = {
+  individual: "#3b82f6",
+  company: "#10b981",
+  "foreign-state": "#ef4444",
+  organization: "#8b5cf6",
+};
+
+// Entity type gradient classes for avatar backgrounds
+export const ENTITY_TYPE_GRADIENTS: Record<string, string> = {
+  individual: "from-blue-600 to-blue-400",
+  company: "from-emerald-600 to-emerald-400",
+  "foreign-state": "from-red-600 to-red-400",
+  organization: "from-violet-600 to-violet-400",
+};
+
+// Entity status badge colors
+export const ENTITY_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+  convicted: { bg: "bg-red-500/20", text: "text-red-300" },
+  "on-trial": { bg: "bg-amber-500/20", text: "text-amber-300" },
+  "under-investigation": { bg: "bg-blue-500/20", text: "text-blue-300" },
+  sanctioned: { bg: "bg-orange-500/20", text: "text-orange-300" },
+  exposed: { bg: "bg-purple-500/20", text: "text-purple-300" },
+  acquitted: { bg: "bg-green-500/20", text: "text-green-300" },
+  active: { bg: "bg-emerald-500/20", text: "text-emerald-300" },
+  dissolved: { bg: "bg-zinc-500/20", text: "text-zinc-300" },
+  unknown: { bg: "bg-zinc-500/20", text: "text-zinc-400" },
+};
+
 // Status badge colors
 export const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   ongoing: { bg: "bg-amber-500/20", text: "text-amber-300" },

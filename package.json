@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "tsx scripts/fetch-data.ts && next build",
+    "build": "tsx scripts/fetch-data.ts && tsx scripts/fetch-entities.ts && next build",
     "fetch-data": "tsx scripts/fetch-data.ts",
+    "fetch-entities": "tsx scripts/fetch-entities.ts",
     "start": "next start",
     "lint": "eslint"
   },
@@ -20,6 +21,7 @@
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-force-graph-2d": "^1.29.1",
     "remark-parse": "^11.0.0",
     "tailwind-merge": "^3.4.0",
     "unified": "^11.0.5",

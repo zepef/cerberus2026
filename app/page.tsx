@@ -3,11 +3,13 @@ import { StatsBar } from "@/app/components/stats-bar";
 import { EUMapWrapper } from "@/app/components/eu-map-wrapper";
 import { MapLegend } from "@/app/components/map-legend";
 import { getDashboardData, getCountrySummaries, getMaxCaseCount } from "@/app/data/corruption-data";
+import { getTotalEntityCount } from "@/app/data/entity-data";
 
 export default function DashboardPage() {
   const data = getDashboardData();
   const summaries = getCountrySummaries();
   const maxCases = getMaxCaseCount();
+  const totalEntities = getTotalEntityCount();
 
   return (
     <div className="min-h-screen">
@@ -26,6 +28,7 @@ export default function DashboardPage() {
           <StatsBar
             totalCountries={data.countries.length}
             totalCases={data.totalCases}
+            totalEntities={totalEntities}
             generatedAt={data.generatedAt}
           />
         </div>

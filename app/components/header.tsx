@@ -23,6 +23,18 @@ export function Header() {
           >
             Map
           </Link>
+          <Link
+            href="/entities"
+            className="text-sm text-zinc-400 transition-colors hover:text-white"
+          >
+            Entities
+          </Link>
+          <Link
+            href="/graph"
+            className="text-sm text-zinc-400 transition-colors hover:text-white"
+          >
+            Network
+          </Link>
         </nav>
       </div>
     </header>
