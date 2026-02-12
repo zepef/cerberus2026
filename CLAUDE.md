@@ -4,25 +4,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-- `npm run dev` — Start development server
-- `npm run build` — Production build
+- `npm run dev` — Start development server (data must be fetched first)
+- `npm run build` — Production build (runs fetch-data + fetch-entities + next build)
 - `npm start` — Start production server
 - `npm run lint` — Run ESLint
 - `npm run fetch-data` — Fetch corruption data from GitHub (requires GITHUB_PAT)
 - `npm run fetch-entities` — Fetch entity data from GitHub (requires GITHUB_PAT)
+
+No test framework is configured.
+
+### First-time setup
+
+1. Create `.env.local` with `GITHUB_PAT=<token>` (scripts read this file manually, not via Next.js env)
+2. Run `npm run fetch-data && npm run fetch-entities` to populate `generated/` (gitignored)
+3. Then `npm run dev` — without step 2, the app renders with empty data (accessors return safe defaults)
 
 ## Architecture
 
 Next.js 16 App Router project with React 19, TypeScript 5 (strict mode), and Tailwind CSS 4 + shadcn/ui.
 
 ### Data Pipeline (build-time)
+Scripts fetch markdown from `zepef/botexchange` via GitHub API, parse with unified/remark mdast AST, and write JSON to `generated/`. App accessors (`app/data/`) load JSON via `require()` at build time with graceful empty-data fallbacks.
+
 - `scripts/lib/github.ts` — Shared GitHub API utils (ghFetch, processBatch, fetchFileContent)
-- `scripts/fetch-data.ts` — Fetches 27 corruption-news.md files from `zepef/botexchange` via GitHub API
-- `scripts/parse-markdown.ts` — Parses corruption markdown into structured data using unified/remark-parse mdast AST
-- `scripts/fetch-entities.ts` — Fetches entity files from `zepef/botexchange/cerberus/countries/*/entities/`
+- `scripts/fetch-data.ts` — Fetches 27 corruption-news.md files → `generated/corruption-data.json`
+- `scripts/fetch-entities.ts` — Fetches entity files from `cerberus/countries/*/entities/` → `generated/entity-data.json`
+- `scripts/parse-markdown.ts` — Parses corruption markdown into structured data
 - `scripts/parse-entity.ts` — Parses entity markdown (individuals, companies, foreign-states, organizations)
-- `generated/corruption-data.json` — Build output (gitignored), consumed by app at build time
-- `generated/entity-data.json` — Build output (gitignored), entity profiles + graph data
 - `app/data/corruption-data.ts` — Accessor functions for corruption JSON
 - `app/data/entity-data.ts` — Accessor functions for entity JSON
 
@@ -32,7 +40,8 @@ Next.js 16 App Router project with React 19, TypeScript 5 (strict mode), and Tai
 - `app/entities/page.tsx` — Filterable entity index page
 - `app/entity/[type]/[slug]/page.tsx` — Entity profile pages (SSG via generateStaticParams)
 - `app/graph/page.tsx` — Interactive force-directed relationship graph
-- `app/components/` — UI components (eu-map, case-list, entity-*, graph-*, header, stats-bar, etc.)
+- `app/components/` — App-specific UI components (eu-map, case-list, entity-*, graph-*, header, stats-bar)
+- `components/ui/` — shadcn/ui primitives (Card, Badge, Tooltip, Separator, ScrollArea, Button, Input, Select, Tabs)
 - `app/lib/types.ts` — TypeScript interfaces for all data shapes
 - `app/lib/constants.ts` — EU country slug→name→ISO mapping (Eurostat convention: Greece=EL)
 - `app/lib/colors.ts` — d3 color scale + entity type colors + status badge colors
@@ -43,7 +52,6 @@ Next.js 16 App Router project with React 19, TypeScript 5 (strict mode), and Tai
 - `d3-scale` + `d3-scale-chromatic` — Sequential color scale (interpolateOrRd)
 - `unified` + `remark-parse` + `unist-util-visit` — Markdown AST parsing
 - `react-force-graph-2d` — Canvas force-directed graph (client component, loaded with ssr:false)
-- `shadcn/ui` — Card, Badge, Tooltip, Separator, ScrollArea, Button, Input, Select, Tabs components
 
 ## Key Conventions
 
