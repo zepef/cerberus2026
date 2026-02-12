@@ -30,6 +30,12 @@ export function Header() {
             Entities
           </Link>
           <Link
+            href="/legislation"
+            className="text-sm text-zinc-400 transition-colors hover:text-white"
+          >
+            Legislation
+          </Link>
+          <Link
             href="/graph"
             className="text-sm text-zinc-400 transition-colors hover:text-white"
           >

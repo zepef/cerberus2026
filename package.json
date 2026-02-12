@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "tsx scripts/fetch-data.ts && tsx scripts/fetch-entities.ts && next build",
+    "build": "tsx scripts/fetch-data.ts && tsx scripts/fetch-entities.ts && tsx scripts/fetch-legislation.ts && next build",
     "fetch-data": "tsx scripts/fetch-data.ts",
     "fetch-entities": "tsx scripts/fetch-entities.ts",
+    "fetch-legislation": "tsx scripts/fetch-legislation.ts",
     "start": "next start",
     "lint": "eslint"
   },

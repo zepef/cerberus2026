@@ -46,6 +46,24 @@ export const ENTITY_STATUS_COLORS: Record<string, { bg: string; text: string }> 
   unknown: { bg: "bg-zinc-500/20", text: "text-zinc-400" },
 };
 
+// Legislation status badge colors
+export const LEGISLATION_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+  enacted: { bg: "bg-green-500/20", text: "text-green-300" },
+  proposed: { bg: "bg-blue-500/20", text: "text-blue-300" },
+  "in-committee": { bg: "bg-amber-500/20", text: "text-amber-300" },
+  vetoed: { bg: "bg-red-500/20", text: "text-red-300" },
+  repealed: { bg: "bg-zinc-500/20", text: "text-zinc-300" },
+  amended: { bg: "bg-purple-500/20", text: "text-purple-300" },
+  stalled: { bg: "bg-orange-500/20", text: "text-orange-300" },
+};
+
+// Legislation impact badge colors
+export const LEGISLATION_IMPACT_COLORS: Record<string, { bg: string; text: string }> = {
+  high: { bg: "bg-red-500/20", text: "text-red-300" },
+  medium: { bg: "bg-amber-500/20", text: "text-amber-300" },
+  low: { bg: "bg-emerald-500/20", text: "text-emerald-300" },
+};
+
 // Status badge colors
 export const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   ongoing: { bg: "bg-amber-500/20", text: "text-amber-300" },

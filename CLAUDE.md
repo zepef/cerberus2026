@@ -5,18 +5,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 - `npm run dev` — Start development server (data must be fetched first)
-- `npm run build` — Production build (runs fetch-data + fetch-entities + next build)
+- `npm run build` — Production build (runs fetch-data + fetch-entities + fetch-legislation + next build)
 - `npm start` — Start production server
 - `npm run lint` — Run ESLint
 - `npm run fetch-data` — Fetch corruption data from GitHub (requires GITHUB_PAT)
 - `npm run fetch-entities` — Fetch entity data from GitHub (requires GITHUB_PAT)
+- `npm run fetch-legislation` — Fetch legislation data from GitHub (requires GITHUB_PAT; runs after fetch-entities)
 
 No test framework is configured.
 
 ### First-time setup
 
 1. Create `.env.local` with `GITHUB_PAT=<token>` (scripts read this file manually, not via Next.js env)
-2. Run `npm run fetch-data && npm run fetch-entities` to populate `generated/` (gitignored)
+2. Run `npm run fetch-data && npm run fetch-entities && npm run fetch-legislation` to populate `generated/` (gitignored)
 3. Then `npm run dev` — without step 2, the app renders with empty data (accessors return safe defaults)
 
 ## Architecture
@@ -31,16 +32,20 @@ Scripts fetch markdown from `zepef/botexchange` via GitHub API, parse with unifi
 - `scripts/fetch-entities.ts` — Fetches entity files from `cerberus/countries/*/entities/` → `generated/entity-data.json`
 - `scripts/parse-markdown.ts` — Parses corruption markdown into structured data
 - `scripts/parse-entity.ts` — Parses entity markdown (individuals, companies, foreign-states, organizations)
+- `scripts/fetch-legislation.ts` — Fetches legislative-changes.md files → `generated/legislation-data.json`
+- `scripts/parse-legislation.ts` — Parses legislation markdown into structured data
 - `app/data/corruption-data.ts` — Accessor functions for corruption JSON
 - `app/data/entity-data.ts` — Accessor functions for entity JSON
+- `app/data/legislation-data.ts` — Accessor functions for legislation JSON
 
 ### App Structure
 - `app/page.tsx` — Dashboard with interactive EU heat map and stats
 - `app/country/[slug]/page.tsx` — 27 static country detail pages (generateStaticParams for SSG)
 - `app/entities/page.tsx` — Filterable entity index page
 - `app/entity/[type]/[slug]/page.tsx` — Entity profile pages (SSG via generateStaticParams)
+- `app/legislation/page.tsx` — Filterable legislation index page
 - `app/graph/page.tsx` — Interactive force-directed relationship graph
-- `app/components/` — App-specific UI components (eu-map, case-list, entity-*, graph-*, header, stats-bar)
+- `app/components/` — App-specific UI components (eu-map, case-list, entity-*, legislation-*, graph-*, header, stats-bar)
 - `components/ui/` — shadcn/ui primitives (Card, Badge, Tooltip, Separator, ScrollArea, Button, Input, Select, Tabs)
 - `app/lib/types.ts` — TypeScript interfaces for all data shapes
 - `app/lib/constants.ts` — EU country slug→name→ISO mapping (Eurostat convention: Greece=EL)

@@ -128,3 +128,66 @@ export interface EntityDataset {
   graphData: GraphData;
   generatedAt: string;
 }
+
+// --- Legislation types ---
+
+export type LegislationStatus =
+  | "enacted"
+  | "proposed"
+  | "in-committee"
+  | "vetoed"
+  | "repealed"
+  | "amended"
+  | "stalled";
+
+export type LegislationImpact = "high" | "medium" | "low";
+
+export interface LinkedEntityRef {
+  displayName: string;
+  entitySlug: string | null;
+}
+
+export interface LegislationEntry {
+  id: string;
+  title: string;
+  status: LegislationStatus;
+  date: string | null;
+  sectors: string[];
+  impact: LegislationImpact;
+  linkedEntities: LinkedEntityRef[];
+  description: string[];
+  sources: string[];
+  category: string;
+}
+
+export interface CountryLegislation {
+  countrySlug: string;
+  countryName: string;
+  isoA2: string;
+  lastUpdated: string | null;
+  filedBy: string | null;
+  categories: string[];
+  entries: LegislationEntry[];
+  entryCount: number;
+}
+
+export interface LegislationSummary {
+  id: string;
+  title: string;
+  status: LegislationStatus;
+  date: string | null;
+  sectors: string[];
+  impact: LegislationImpact;
+  countrySlug: string;
+  countryName: string;
+  linkedEntityCount: number;
+  sourceCount: number;
+  category: string;
+}
+
+export interface LegislationDataset {
+  countries: CountryLegislation[];
+  totalEntries: number;
+  allSectors: string[];
+  generatedAt: string;
+}
