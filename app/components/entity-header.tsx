@@ -60,6 +60,14 @@ export function EntityHeader({ entity }: EntityHeaderProps) {
             </div>
           </div>
         </div>
+        {entity.profileTitle && (
+          <div className="mt-4 border-t border-white/10 pt-4">
+            <h2 className="text-sm font-semibold text-orange-400">{entity.profileTitle}</h2>
+            {entity.profileSummary && (
+              <p className="mt-1 text-sm leading-relaxed text-zinc-300">{entity.profileSummary}</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

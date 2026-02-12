@@ -320,6 +320,8 @@ export function parseEntityMarkdown(
     sources,
     initials: deriveInitials(name),
     imageUrl: null,
+    profileTitle: null,
+    profileSummary: null,
     rawMarkdown: markdown,
   };
 }
