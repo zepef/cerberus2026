@@ -147,6 +147,44 @@ function resolveConnections(allEntities: EntityData[]): void {
   }
 }
 
+interface WikipediaQueryResponse {
+  query?: {
+    pages?: Record<
+      string,
+      {
+        thumbnail?: { source: string };
+      }
+    >;
+  };
+}
+
+async function fetchWikipediaImage(name: string): Promise<string | null> {
+  const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(name)}&prop=pageimages&format=json&pithumbsize=200&redirects=1`;
+  try {
+    const response = await fetch(url, {
+      headers: { "User-Agent": "cerberus2026-dashboard" },
+    });
+    if (!response.ok) return null;
+    const data = (await response.json()) as WikipediaQueryResponse;
+    const pages = data.query?.pages;
+    if (!pages) return null;
+    const page = Object.values(pages)[0];
+    return page?.thumbnail?.source ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchWikipediaImages(allEntities: EntityData[]): Promise<void> {
+  await processBatch(allEntities, CONCURRENCY, async (entity) => {
+    const imageUrl = await fetchWikipediaImage(entity.name);
+    entity.imageUrl = imageUrl;
+    if (imageUrl) {
+      console.log(`  [IMG] ${entity.name} → found`);
+    }
+  });
+}
+
 function buildGraphData(allEntities: EntityData[]): GraphData {
   const nodes: GraphNode[] = allEntities.map((e) => ({
     id: e.slug,
@@ -227,6 +265,11 @@ async function main() {
     0
   );
   console.log(`  Resolved ${resolvedCount}/${totalConns} connections`);
+
+  console.log("[IMAGES] Fetching Wikipedia images...");
+  await fetchWikipediaImages(allEntities);
+  const imageCount = allEntities.filter((e) => e.imageUrl).length;
+  console.log(`  Found images for ${imageCount}/${allEntities.length} entities`);
 
   console.log("[GRAPH] Building graph data...");
   const graphData = buildGraphData(allEntities);

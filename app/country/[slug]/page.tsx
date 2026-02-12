@@ -66,6 +66,7 @@ export default async function CountryPage({ params }: PageProps) {
                     <EntityAvatar
                       initials={entity.initials}
                       type={entity.type}
+                      imageUrl={entity.imageUrl}
                       size="sm"
                     />
                     <div className="min-w-0 flex-1">

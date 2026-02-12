@@ -86,6 +86,7 @@ export interface EntityData {
   connections: EntityConnection[];
   sources: string[];
   initials: string;
+  imageUrl: string | null;
   rawMarkdown: string;
 }
 
@@ -98,6 +99,7 @@ export interface EntitySummary {
   status: EntityStatus;
   role: string | null;
   initials: string;
+  imageUrl: string | null;
   connectionCount: number;
   caseCount: number;
 }

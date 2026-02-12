@@ -46,6 +46,7 @@ export function getEntitySummaries(): EntitySummary[] {
     status: e.status,
     role: e.role,
     initials: e.initials,
+    imageUrl: e.imageUrl,
     connectionCount: e.connections.length,
     caseCount: e.cases.length,
   }));
@@ -77,6 +78,7 @@ export function getEntitiesByCountry(countrySlug: string): EntitySummary[] {
       status: e.status,
       role: e.role,
       initials: e.initials,
+      imageUrl: e.imageUrl,
       connectionCount: e.connections.length,
       caseCount: e.cases.length,
     }));

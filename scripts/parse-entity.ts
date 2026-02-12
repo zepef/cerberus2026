@@ -319,6 +319,7 @@ export function parseEntityMarkdown(
     connections,
     sources,
     initials: deriveInitials(name),
+    imageUrl: null,
     rawMarkdown: markdown,
   };
 }

@@ -16,7 +16,7 @@ export function EntityCard({ entity }: EntityCardProps) {
       href={`/entity/${entity.slug}`}
       className="glass-card glow-hover flex items-start gap-3 rounded-xl p-4 transition-all"
     >
-      <EntityAvatar initials={entity.initials} type={entity.type} size="md" />
+      <EntityAvatar initials={entity.initials} type={entity.type} imageUrl={entity.imageUrl} size="md" />
       <div className="min-w-0 flex-1">
         <h3 className="font-medium text-white truncate">{entity.name}</h3>
         <p className="text-xs text-zinc-400 truncate">

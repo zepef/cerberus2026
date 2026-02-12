@@ -24,7 +24,7 @@ export function EntityHeader({ entity }: EntityHeaderProps) {
 
       <div className="glass-strong rounded-2xl p-6">
         <div className="flex items-start gap-5">
-          <EntityAvatar initials={entity.initials} type={entity.type} size="lg" />
+          <EntityAvatar initials={entity.initials} type={entity.type} imageUrl={entity.imageUrl} size="lg" />
           <div className="flex-1 min-w-0">
             <h1 className="text-3xl font-bold text-white">{entity.name}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-2">
