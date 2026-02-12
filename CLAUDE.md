@@ -68,3 +68,4 @@ Scripts fetch markdown from `zepef/botexchange` via GitHub API, parse with unifi
 - **Graph component:** Must be loaded client-side only (ssr:false via graph-wrapper.tsx) because react-force-graph-2d uses Canvas
 - **Greece edge case:** Eurostat uses ISO code `EL`, not `GR`. Handled in constants.ts
 - **Entity slugs:** Format is `{type}/{name-slug}` (e.g., `individual/kurz-sebastian`)
+- **Data fetching:** Always commit and push after running fetch scripts (`fetch-data`, `fetch-entities`, `fetch-legislation`) if they produce any tracked file changes
