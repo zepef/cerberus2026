@@ -1,7 +1,7 @@
 ---
 name: update-entity
 description: Update entity profiles in entity-data.json with research bot results (profileTitle + profileSummary)
-user_invocable: true
+user-invocable: true
 ---
 
 # Update Entity Profile

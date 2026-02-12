@@ -1,7 +1,7 @@
 ---
 name: fetch-and-deploy
 description: Fetch all data from botexchange repo, rebuild, commit, and push
-user_invocable: true
+user-invocable: true
 ---
 
 # Fetch and Deploy
