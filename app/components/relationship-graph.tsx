@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useEffect, useState } from "react";
+import { useRef, useCallback, useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import ForceGraph2D, { type ForceGraphMethods } from "react-force-graph-2d";
 import { ENTITY_TYPE_COLORS } from "@/app/lib/colors";
@@ -51,14 +51,14 @@ export function RelationshipGraph({ nodes, edges }: RelationshipGraphProps) {
     }
   }, []);
 
-  const graphData = {
+  const graphData = useMemo(() => ({
     nodes: nodes.map((n) => ({ ...n })),
     links: edges.map((e) => ({
       source: e.source,
       target: e.target,
       relationship: e.relationship,
     })),
-  };
+  }), [nodes, edges]);
 
   const paintNode = useCallback(
     (node: GraphNodeInternal, ctx: CanvasRenderingContext2D) => {

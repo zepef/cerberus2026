@@ -223,6 +223,7 @@ function generateEntityProfiles(allEntities: EntityData[]): void {
 }
 
 function buildGraphData(allEntities: EntityData[]): GraphData {
+  const nodeIds = new Set(allEntities.map((e) => e.slug));
   const nodes: GraphNode[] = allEntities.map((e) => ({
     id: e.slug,
     name: e.name,
@@ -232,13 +233,15 @@ function buildGraphData(allEntities: EntityData[]): GraphData {
     initials: e.initials,
   }));
 
-  // Build edges from resolved connections (deduplicate)
+  // Build edges from resolved connections (deduplicate, skip dangling)
   const edgeSet = new Set<string>();
   const edges: GraphEdge[] = [];
 
   for (const entity of allEntities) {
     for (const conn of entity.connections) {
       if (!conn.resolved) continue;
+      // Skip edges where target node doesn't exist
+      if (!nodeIds.has(conn.targetSlug)) continue;
 
       // Deduplicate: A→B and B→A should be one edge
       const key = [entity.slug, conn.targetSlug].sort().join("↔");
