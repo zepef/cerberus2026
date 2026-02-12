@@ -14,6 +14,8 @@ interface RelationshipGraphProps {
 interface GraphNodeInternal extends GraphNode {
   x?: number;
   y?: number;
+  fx?: number | undefined;
+  fy?: number | undefined;
 }
 
 export function RelationshipGraph({ nodes, edges }: RelationshipGraphProps) {
@@ -22,6 +24,10 @@ export function RelationshipGraph({ nodes, edges }: RelationshipGraphProps) {
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [showControls, setShowControls] = useState(false);
+  const [chargeStrength, setChargeStrength] = useState(-200);
+  const [linkDistance, setLinkDistance] = useState(100);
+  const [centerStrength, setCenterStrength] = useState(1);
 
   useEffect(() => {
     function updateDimensions() {
@@ -42,14 +48,19 @@ export function RelationshipGraph({ nodes, edges }: RelationshipGraphProps) {
       const fg = fgRef.current;
       const charge = fg.d3Force("charge");
       if (charge && "strength" in charge) {
-        (charge as unknown as { strength: (s: number) => void }).strength(-200);
+        (charge as unknown as { strength: (s: number) => void }).strength(chargeStrength);
       }
       const link = fg.d3Force("link");
       if (link && "distance" in link) {
-        (link as unknown as { distance: (d: number) => void }).distance(100);
+        (link as unknown as { distance: (d: number) => void }).distance(linkDistance);
       }
+      const center = fg.d3Force("center");
+      if (center && "strength" in center) {
+        (center as unknown as { strength: (s: number) => void }).strength(centerStrength);
+      }
+      fg.d3ReheatSimulation();
     }
-  }, []);
+  }, [chargeStrength, linkDistance, centerStrength]);
 
   const graphData = useMemo(() => ({
     nodes: nodes.map((n) => ({ ...n })),
@@ -109,8 +120,83 @@ export function RelationshipGraph({ nodes, edges }: RelationshipGraphProps) {
     [router]
   );
 
+  const handleNodeDragEnd = useCallback((node: object) => {
+    const n = node as GraphNodeInternal;
+    n.fx = n.x;
+    n.fy = n.y;
+  }, []);
+
   return (
-    <div ref={containerRef} className="graph-glass rounded-2xl overflow-hidden">
+    <div ref={containerRef} className="graph-glass relative rounded-2xl overflow-hidden">
+      {/* Controls toggle */}
+      <button
+        onClick={() => setShowControls((v) => !v)}
+        className="absolute top-3 right-3 z-10 rounded-lg bg-white/10 px-3 py-1.5 text-xs text-zinc-300 backdrop-blur transition-colors hover:bg-white/20"
+      >
+        {showControls ? "Hide" : "Controls"}
+      </button>
+
+      {/* Control panel */}
+      {showControls && (
+        <div className="absolute top-12 right-3 z-10 w-56 rounded-xl bg-black/80 p-4 backdrop-blur space-y-4">
+          <div>
+            <label className="flex items-center justify-between text-[11px] text-zinc-400">
+              <span>Repulsion</span>
+              <span className="text-zinc-500">{chargeStrength}</span>
+            </label>
+            <input
+              type="range"
+              min={-500}
+              max={-20}
+              step={10}
+              value={chargeStrength}
+              onChange={(e) => setChargeStrength(Number(e.target.value))}
+              className="mt-1 w-full accent-orange-500"
+            />
+          </div>
+          <div>
+            <label className="flex items-center justify-between text-[11px] text-zinc-400">
+              <span>Link Distance</span>
+              <span className="text-zinc-500">{linkDistance}</span>
+            </label>
+            <input
+              type="range"
+              min={20}
+              max={300}
+              step={10}
+              value={linkDistance}
+              onChange={(e) => setLinkDistance(Number(e.target.value))}
+              className="mt-1 w-full accent-orange-500"
+            />
+          </div>
+          <div>
+            <label className="flex items-center justify-between text-[11px] text-zinc-400">
+              <span>Center Pull</span>
+              <span className="text-zinc-500">{centerStrength.toFixed(1)}</span>
+            </label>
+            <input
+              type="range"
+              min={0}
+              max={2}
+              step={0.1}
+              value={centerStrength}
+              onChange={(e) => setCenterStrength(Number(e.target.value))}
+              className="mt-1 w-full accent-orange-500"
+            />
+          </div>
+          <button
+            onClick={() => {
+              setChargeStrength(-200);
+              setLinkDistance(100);
+              setCenterStrength(1);
+            }}
+            className="w-full rounded-lg bg-white/10 py-1 text-[11px] text-zinc-400 transition-colors hover:bg-white/20"
+          >
+            Reset
+          </button>
+        </div>
+      )}
+
       <ForceGraph2D
         ref={fgRef}
         graphData={graphData}
@@ -130,6 +216,8 @@ export function RelationshipGraph({ nodes, edges }: RelationshipGraphProps) {
           setHoveredNode(n?.id ?? null);
         }}
         onNodeClick={(node: object) => handleNodeClick(node as GraphNodeInternal)}
+        onNodeDragEnd={handleNodeDragEnd}
+        enableNodeDrag={true}
         linkColor={() => "rgba(255,255,255,0.1)"}
         linkWidth={1.5}
         linkCurvature={0.2}
