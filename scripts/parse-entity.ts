@@ -1,5 +1,6 @@
 import { unified } from "unified";
 import remarkParse from "remark-parse";
+import remarkGfm from "remark-gfm";
 import type { Root, Heading, ListItem } from "mdast";
 import type {
   EntityData,
@@ -12,23 +13,13 @@ import type {
 /**
  * Recursively extract plain text from an mdast node and its children.
  */
-function getTextContent(node: {
-  value?: string;
-  children?: Array<{ value?: string; children?: Array<{ value?: string }> }>;
-}): string {
-  if ("value" in node && typeof node.value === "string") return node.value;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getTextContent(node: any): string {
+  if (typeof node.value === "string") return node.value;
   let text = "";
-  if (node.children) {
+  if (Array.isArray(node.children)) {
     for (const child of node.children) {
-      if ("value" in child && typeof child.value === "string") {
-        text += child.value;
-      } else if ("children" in child && child.children) {
-        for (const grandchild of child.children) {
-          if ("value" in grandchild && typeof grandchild.value === "string") {
-            text += grandchild.value;
-          }
-        }
-      }
+      text += getTextContent(child);
     }
   }
   return text;
@@ -118,11 +109,86 @@ function parseConnectionItem(text: string): EntityConnection | null {
   return null;
 }
 
-// Reusable type alias matching parse-markdown.ts pattern
-type TextNode = {
-  value?: string;
-  children?: Array<{ value?: string; children?: Array<{ value?: string }> }>;
-};
+
+/**
+ * Parse a cross-reference path like "austria/entities/individuals/schmid-thomas.md"
+ * into an EntityConnection with the correct slug format.
+ */
+function parseCrossRefPath(refPath: string): EntityConnection | null {
+  // Match patterns: country/entities/type/name.md
+  const match = refPath.match(/entities\/(\w[\w-]*)\/(\w[\w-]*)\.md/);
+  if (!match) return null;
+
+  const dirName = match[1]; // e.g., "individuals"
+  const fileName = match[2]; // e.g., "schmid-thomas"
+
+  // Map directory to entity type slug prefix
+  const typeMap: Record<string, string> = {
+    individuals: "individual",
+    companies: "company",
+    "foreign-states": "foreign-state",
+    organizations: "organization",
+  };
+  const typePrefix = typeMap[dirName];
+  if (!typePrefix) return null;
+
+  const targetSlug = `${typePrefix}/${fileName}`;
+  // Convert slug to display name: "schmid-thomas" → "Schmid Thomas"
+  const displayName = fileName
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+
+  return {
+    targetSlug,
+    targetName: displayName,
+    relationship: "cross-referenced",
+    resolved: true, // We know the slug directly
+  };
+}
+
+/** Check if a section heading indicates biographical content */
+function isBioSection(section: string): boolean {
+  return (
+    section.includes("biography") ||
+    section === "profile" ||
+    section === "overview" ||
+    section.includes("early life") ||
+    section.includes("political career") ||
+    section.includes("post-politics") ||
+    section.includes("family")
+  );
+}
+
+/** Check if a section heading indicates case/scandal content */
+function isCaseSection(section: string): boolean {
+  return (
+    section.includes("cases") ||
+    section.includes("criminal") ||
+    section.includes("scandal") ||
+    section.includes("allegations") ||
+    section.includes("controversies") ||
+    section.includes("corruption") ||
+    section.includes("charges") ||
+    section.includes("convictions") ||
+    section.includes("downfall") ||
+    section.includes("money laundering")
+  );
+}
+
+/** Check if a section heading indicates connections/associates */
+function isConnectionSection(section: string): boolean {
+  return (
+    section.includes("key associates") ||
+    section.includes("connection") ||
+    section.includes("key actors") ||
+    section.includes("key entities") ||
+    section.includes("business connections") ||
+    section.includes("cross-references") ||
+    section.includes("family & network") ||
+    section.includes("international connections")
+  );
+}
 
 /**
  * Parse an entity markdown file into structured EntityData.
@@ -137,13 +203,16 @@ export function parseEntityMarkdown(
   countrySlug: string,
   countryName: string
 ): EntityData {
-  const tree = unified().use(remarkParse).parse(markdown) as Root;
+  const tree = unified().use(remarkParse).use(remarkGfm).parse(markdown) as Root;
 
   let name = "";
   let status: EntityStatus = "unknown";
   let role: string | null = null;
   let party: string | null = null;
   let birthDate: string | null = null;
+  let profileTitle: string | null = null;
+  let profileSummary: string | null = null;
+  let whyTracked: string | null = null;
   const biography: string[] = [];
   const cases: EntityCaseReference[] = [];
   const connections: EntityConnection[] = [];
@@ -161,13 +230,13 @@ export function parseEntityMarkdown(
 
     // --- H1: Extract entity name ---
     if (node.type === "heading" && (node as Heading).depth === 1) {
-      name = getTextContent(node as unknown as TextNode).trim();
+      name = getTextContent(node).trim();
       continue;
     }
 
     // --- Metadata paragraphs before first H2 ---
     if (node.type === "paragraph" && !seenFirstH2) {
-      const text = getTextContent(node as unknown as TextNode).trim();
+      const text = getTextContent(node).trim();
 
       const statusVal = extractMetaValue(text, "Status");
       if (statusVal) {
@@ -206,44 +275,71 @@ export function parseEntityMarkdown(
         currentCaseRef = null;
       }
 
-      currentSection = getTextContent(node as unknown as TextNode).trim().toLowerCase();
+      currentSection = getTextContent(node).trim().toLowerCase();
       continue;
     }
 
-    // --- H3: Case sub-headings within "cases involved" ---
+    // --- H3: Sub-headings ---
     if (node.type === "heading" && (node as Heading).depth === 3) {
-      if (currentSection.includes("cases involved") || currentSection.includes("cases")) {
+      const h3Text = getTextContent(node).trim();
+
+      if (isCaseSection(currentSection)) {
         // Flush previous case reference
         if (currentCaseRef) {
           cases.push(currentCaseRef);
         }
-
-        const title = getTextContent(node as unknown as TextNode).trim();
         currentCaseRef = {
-          title,
+          title: h3Text,
           countrySlug: null,
           description: null,
         };
+      } else if (isBioSection(currentSection)) {
+        // Add H3 heading as a biography line
+        biography.push(h3Text);
       }
       continue;
     }
 
     // --- Paragraph content within sections ---
     if (node.type === "paragraph") {
-      const text = getTextContent(node as unknown as TextNode).trim();
+      const text = getTextContent(node).trim();
       if (!text) continue;
 
-      // Biography section
-      if (currentSection.includes("biography")) {
+      // CERBERUS Summary section — extract title, description, why tracked
+      // These may be on separate lines within a single mdast paragraph
+      if (currentSection.includes("cerberus summary")) {
+        const titleVal = extractMetaValue(text, "Title");
+        if (titleVal) profileTitle = titleVal.replace(/\s*(Description|Why tracked):[\s\S]*$/i, "").trim();
+        const descVal = extractMetaValue(text, "Description");
+        if (descVal) profileSummary = descVal.replace(/\s*(Title|Why tracked):[\s\S]*$/i, "").trim();
+        const whyVal = extractMetaValue(text, "Why tracked");
+        if (whyVal) whyTracked = whyVal.trim();
+        continue;
+      }
+
+      // Basic Info section — extract metadata that may have moved here
+      if (currentSection === "basic info") {
+        const statusVal = extractMetaValue(text, "Status");
+        if (statusVal) { status = inferEntityStatus(statusVal); continue; }
+        const roleVal = extractMetaValue(text, "Role");
+        if (roleVal) { role = roleVal; continue; }
+        const partyVal = extractMetaValue(text, "Party");
+        if (partyVal) { party = partyVal; continue; }
+        const bornVal = extractMetaValue(text, "Born");
+        if (bornVal) { birthDate = bornVal; continue; }
+        const countryVal = extractMetaValue(text, "Country");
+        if (countryVal) continue; // skip, we already know the country
+        continue;
+      }
+
+      // Biography / Profile / Overview section
+      if (isBioSection(currentSection)) {
         biography.push(text);
         continue;
       }
 
       // Cases section — attach description to current case reference
-      if (
-        (currentSection.includes("cases involved") || currentSection.includes("cases")) &&
-        currentCaseRef
-      ) {
+      if (isCaseSection(currentSection) && currentCaseRef) {
         if (currentCaseRef.description) {
           currentCaseRef.description += " " + text;
         } else {
@@ -257,35 +353,58 @@ export function parseEntityMarkdown(
     if (node.type === "list") {
       const listItems = (node as { children: ListItem[] }).children;
 
-      // Key Associates / Connections section
-      if (currentSection.includes("key associates") || currentSection.includes("connections")) {
+      // Key Associates / Connections / Key Actors / Key Entities / Cross-References
+      if (isConnectionSection(currentSection)) {
         for (const item of listItems) {
-          const text = getTextContent(item as unknown as TextNode).trim();
+          const text = getTextContent(item).trim();
           if (!text) continue;
+          // Try standard connection format: **Name** — relationship
           const connection = parseConnectionItem(text);
           if (connection) {
             connections.push(connection);
+            continue;
+          }
+          // Parse cross-ref paths: "See: country/entities/type/name.md"
+          const seeMatch = text.match(/See:\s*`?([^`]+)`?/i);
+          if (seeMatch) {
+            const refPath = seeMatch[1].trim();
+            const conn = parseCrossRefPath(refPath);
+            if (conn) connections.push(conn);
           }
         }
         continue;
       }
 
-      // Sources section
-      if (currentSection.includes("sources")) {
+      // Basic Info section — extract metadata from list items
+      if (currentSection === "basic info") {
         for (const item of listItems) {
-          const text = getTextContent(item as unknown as TextNode).trim();
+          const text = getTextContent(item).trim();
+          if (!text) continue;
+          const statusVal = extractMetaValue(text, "Status");
+          if (statusVal) { status = inferEntityStatus(statusVal); continue; }
+          const roleVal = extractMetaValue(text, "Role");
+          if (roleVal) { role = roleVal; continue; }
+          const partyVal = extractMetaValue(text, "Party");
+          if (partyVal) { party = partyVal; continue; }
+          const bornVal = extractMetaValue(text, "Born");
+          if (bornVal) { birthDate = bornVal; continue; }
+        }
+        continue;
+      }
+
+      // Sources section
+      if (currentSection.includes("sources") || currentSection.includes("key documents")) {
+        for (const item of listItems) {
+          const text = getTextContent(item).trim();
           if (text) sources.push(text);
         }
         continue;
       }
 
       // Cases section — collect list descriptions into current case
-      if (
-        (currentSection.includes("cases involved") || currentSection.includes("cases")) &&
-        currentCaseRef
-      ) {
+      if (isCaseSection(currentSection) && currentCaseRef) {
         for (const item of listItems) {
-          const text = getTextContent(item as unknown as TextNode).trim();
+          const text = getTextContent(item).trim();
           if (text) {
             if (currentCaseRef.description) {
               currentCaseRef.description += " " + text;
@@ -296,6 +415,38 @@ export function parseEntityMarkdown(
         }
         continue;
       }
+
+      // Biography / Profile / Overview — capture list items as bio lines
+      if (isBioSection(currentSection)) {
+        for (const item of listItems) {
+          const text = getTextContent(item).trim();
+          if (text) biography.push(text);
+        }
+        continue;
+      }
+
+    }
+
+    // --- Table content (e.g., case tables) ---
+    if (node.type === "table" && isCaseSection(currentSection)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rows = (node as any).children;
+      // Skip header row (index 0), parse data rows
+      for (let r = 1; r < rows.length; r++) {
+        const cells = rows[r].children;
+        if (!cells || cells.length === 0) continue;
+        const caseTitle = getTextContent(cells[0]).trim();
+        const caseDesc = cells.length > 1 ? getTextContent(cells[1]).trim() : null;
+        const caseStatus = cells.length > 2 ? getTextContent(cells[2]).trim() : null;
+        if (caseTitle) {
+          cases.push({
+            title: caseTitle,
+            countrySlug: null,
+            description: [caseDesc, caseStatus].filter(Boolean).join(" — ") || null,
+          });
+        }
+      }
+      continue;
     }
   }
 
@@ -320,8 +471,9 @@ export function parseEntityMarkdown(
     sources,
     initials: deriveInitials(name),
     imageUrl: null,
-    profileTitle: null,
-    profileSummary: null,
+    profileTitle,
+    profileSummary,
+    whyTracked,
     rawMarkdown: markdown,
   };
 }

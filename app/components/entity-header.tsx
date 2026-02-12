@@ -66,6 +66,11 @@ export function EntityHeader({ entity }: EntityHeaderProps) {
             {entity.profileSummary && (
               <p className="mt-1 text-sm leading-relaxed text-zinc-300">{entity.profileSummary}</p>
             )}
+            {entity.whyTracked && (
+              <p className="mt-1 text-xs text-zinc-500">
+                <span className="font-medium text-zinc-400">Why tracked:</span> {entity.whyTracked}
+              </p>
+            )}
           </div>
         )}
       </div>

@@ -89,6 +89,7 @@ export interface EntityData {
   imageUrl: string | null;
   profileTitle: string | null;
   profileSummary: string | null;
+  whyTracked: string | null;
   rawMarkdown: string;
 }
 

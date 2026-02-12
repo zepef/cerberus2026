@@ -185,6 +185,43 @@ async function fetchWikipediaImages(allEntities: EntityData[]): Promise<void> {
   });
 }
 
+function generateEntityProfiles(allEntities: EntityData[]): void {
+  for (const entity of allEntities) {
+    if (entity.profileTitle && entity.profileSummary) continue; // already set
+
+    const caseNames = entity.cases.map((c) => c.title).filter(Boolean);
+    const topCase = caseNames[0] || null;
+
+    // Generate title
+    if (entity.type === "individual") {
+      if (topCase) {
+        entity.profileTitle = `${entity.role || "Figure"} linked to ${topCase}`;
+      } else {
+        entity.profileTitle = `${entity.role || "Individual"} under ${entity.status} in ${entity.countryName}`;
+      }
+    } else if (entity.type === "company") {
+      entity.profileTitle = `${entity.name} — corporate involvement in ${entity.countryName}`;
+    } else if (entity.type === "foreign-state") {
+      entity.profileTitle = `${entity.name} — foreign influence in EU affairs`;
+    } else {
+      entity.profileTitle = `${entity.name} — ${entity.type} tracked in ${entity.countryName}`;
+    }
+
+    // Generate summary from cases + bio
+    const parts: string[] = [];
+    if (entity.role) parts.push(entity.role + ".");
+    if (entity.status !== "unknown") parts.push(`Status: ${entity.status}.`);
+    if (caseNames.length > 0) {
+      parts.push(`Linked to ${caseNames.length} case${caseNames.length > 1 ? "s" : ""}: ${caseNames.slice(0, 3).join(", ")}${caseNames.length > 3 ? "..." : ""}.`);
+    }
+    if (entity.connections.length > 0) {
+      parts.push(`${entity.connections.length} known connection${entity.connections.length > 1 ? "s" : ""}.`);
+    }
+
+    entity.profileSummary = parts.join(" ") || null;
+  }
+}
+
 function buildGraphData(allEntities: EntityData[]): GraphData {
   const nodes: GraphNode[] = allEntities.map((e) => ({
     id: e.slug,
@@ -270,6 +307,11 @@ async function main() {
   await fetchWikipediaImages(allEntities);
   const imageCount = allEntities.filter((e) => e.imageUrl).length;
   console.log(`  Found images for ${imageCount}/${allEntities.length} entities`);
+
+  console.log("[PROFILES] Generating entity profiles...");
+  generateEntityProfiles(allEntities);
+  const profileCount = allEntities.filter((e) => e.profileTitle).length;
+  console.log(`  Generated profiles for ${profileCount} entities`);
 
   console.log("[GRAPH] Building graph data...");
   const graphData = buildGraphData(allEntities);
