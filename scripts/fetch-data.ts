@@ -2,42 +2,21 @@ import * as fs from "fs";
 import * as path from "path";
 import { EU_COUNTRIES } from "../app/lib/constants";
 import { parseCorruptionMarkdown } from "./parse-markdown";
+import {
+  loadEnv,
+  getGitHubPat,
+  ghFetch,
+  processBatch,
+  REPO_OWNER,
+  REPO_NAME,
+} from "./lib/github";
 import type { DashboardData, CountryData } from "../app/lib/types";
 
-// Load .env.local
-const envPath = path.resolve(__dirname, "../.env.local");
-if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, "utf-8");
-  for (const line of envContent.split("\n")) {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith("#")) {
-      const eqIdx = trimmed.indexOf("=");
-      if (eqIdx > 0) {
-        const key = trimmed.slice(0, eqIdx).trim();
-        const value = trimmed.slice(eqIdx + 1).trim();
-        if (!process.env[key]) {
-          process.env[key] = value;
-        }
-      }
-    }
-  }
-}
+loadEnv(path.resolve(__dirname, ".."));
 
-const REPO_OWNER = "zepef";
-const REPO_NAME = "botexchange";
 const BASE_PATH = "cerberus/countries";
 const CONCURRENCY = 5;
 const OUTPUT_PATH = path.resolve(__dirname, "../generated/corruption-data.json");
-
-async function ghFetch(url: string, pat: string): Promise<Response> {
-  return fetch(url, {
-    headers: {
-      Authorization: `token ${pat}`,
-      Accept: "application/vnd.github.v3+json",
-      "User-Agent": "cerberus2026-dashboard",
-    },
-  });
-}
 
 async function fetchFileContent(
   slug: string,
@@ -80,30 +59,12 @@ async function fetchFileContent(
 
     // Decode base64 content
     const decoded = Buffer.from(data.content, "base64").toString("utf-8");
-    // Strip emoji that could cause encoding issues
-    return decoded.replace(/[\u{1F600}-\u{1F9FF}]/gu, "").trim();
+    // Strip emoji that could cause encoding issues (covers all common emoji blocks)
+    return decoded.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, "").trim();
   } catch (err) {
     console.error(`  [ERROR] ${slug}:`, err);
     return null;
   }
-}
-
-async function processBatch<T, R>(
-  items: T[],
-  concurrency: number,
-  fn: (item: T) => Promise<R>
-): Promise<R[]> {
-  const results: R[] = [];
-  for (let i = 0; i < items.length; i += concurrency) {
-    const batch = items.slice(i, i + concurrency);
-    const batchResults = await Promise.allSettled(batch.map(fn));
-    for (const result of batchResults) {
-      if (result.status === "fulfilled") {
-        results.push(result.value);
-      }
-    }
-  }
-  return results;
 }
 
 async function main() {
@@ -113,11 +74,7 @@ async function main() {
     return;
   }
 
-  const pat = process.env.GITHUB_PAT;
-  if (!pat || pat === "your_github_personal_access_token_here") {
-    console.error("[ERROR] GITHUB_PAT not set in environment. Set it in .env.local");
-    process.exit(1);
-  }
+  const pat = getGitHubPat();
 
   console.log("[START] Fetching corruption data for 27 EU countries...\n");
 
@@ -125,7 +82,7 @@ async function main() {
   const countries: CountryData[] = [];
   let totalCases = 0;
 
-  const results = await processBatch(
+  const { results, succeeded, failed } = await processBatch(
     slugs,
     CONCURRENCY,
     async (slug) => {
@@ -171,7 +128,12 @@ async function main() {
   console.log(`\n[DONE] Generated corruption-data.json`);
   console.log(`  Countries: ${countries.length}`);
   console.log(`  Total cases: ${totalCases}`);
+  console.log(`  Batch results: ${succeeded} succeeded, ${failed} failed`);
   console.log(`  Output: ${OUTPUT_PATH}`);
+
+  if (failed > 0) {
+    console.error(`\n[WARN] ${failed} batch items failed during fetch`);
+  }
 }
 
 main().catch((err) => {

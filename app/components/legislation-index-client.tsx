@@ -83,6 +83,7 @@ export function LegislationIndexClient({
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
           <Input
+            aria-label="Search legislation"
             placeholder="Search legislation..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -90,6 +91,7 @@ export function LegislationIndexClient({
           />
         </div>
         <select
+          aria-label="Filter by status"
           value={statusFilter}
           onChange={(e) =>
             setStatusFilter(e.target.value as LegislationStatus | "all")
@@ -103,6 +105,7 @@ export function LegislationIndexClient({
           ))}
         </select>
         <select
+          aria-label="Filter by impact level"
           value={impactFilter}
           onChange={(e) =>
             setImpactFilter(e.target.value as LegislationImpact | "all")
@@ -116,6 +119,7 @@ export function LegislationIndexClient({
           ))}
         </select>
         <select
+          aria-label="Filter by country"
           value={countryFilter}
           onChange={(e) => setCountryFilter(e.target.value)}
           className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none"
@@ -130,6 +134,7 @@ export function LegislationIndexClient({
           ))}
         </select>
         <select
+          aria-label="Filter by sector"
           value={sectorFilter}
           onChange={(e) => setSectorFilter(e.target.value)}
           className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none"

@@ -62,26 +62,44 @@ export async function ghFetch(url: string, pat: string): Promise<Response> {
   });
 }
 
+export interface BatchResult<R> {
+  results: R[];
+  succeeded: number;
+  failed: number;
+  errors: { index: number; reason: unknown }[];
+}
+
 /**
  * Process an array of items in batches with a given concurrency limit.
- * Settled promises that are rejected are silently skipped.
+ * Returns results along with success/failure counts.
  */
 export async function processBatch<T, R>(
   items: T[],
   concurrency: number,
   fn: (item: T) => Promise<R>
-): Promise<R[]> {
+): Promise<BatchResult<R>> {
   const results: R[] = [];
+  let succeeded = 0;
+  let failed = 0;
+  const errors: { index: number; reason: unknown }[] = [];
+
   for (let i = 0; i < items.length; i += concurrency) {
     const batch = items.slice(i, i + concurrency);
     const batchResults = await Promise.allSettled(batch.map(fn));
-    for (const result of batchResults) {
+    for (let j = 0; j < batchResults.length; j++) {
+      const result = batchResults[j];
       if (result.status === "fulfilled") {
         results.push(result.value);
+        succeeded++;
+      } else {
+        failed++;
+        errors.push({ index: i + j, reason: result.reason });
+        console.error(`  [FAIL] Batch item ${i + j}:`, result.reason);
       }
     }
   }
-  return results;
+
+  return { results, succeeded, failed, errors };
 }
 
 /**
@@ -115,8 +133,8 @@ export async function fetchFileContent(
 
     // Decode base64 content
     const decoded = Buffer.from(data.content, "base64").toString("utf-8");
-    // Strip emoji that could cause encoding issues
-    return decoded.replace(/[\u{1F600}-\u{1F9FF}]/gu, "").trim();
+    // Strip emoji that could cause encoding issues (covers all common emoji blocks)
+    return decoded.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, "").trim();
   } catch (err) {
     console.error(`  [ERROR] fetchFileContent(${apiUrl}):`, err);
     return null;

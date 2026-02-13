@@ -3,6 +3,7 @@ import type {
   CountryLegislation,
   LegislationSummary,
 } from "@/app/lib/types";
+import { LegislationDatasetSchema } from "./schemas";
 
 // Import the generated JSON — resolved at build time
 let _data: LegislationDataset | null = null;
@@ -11,7 +12,14 @@ function loadData(): LegislationDataset {
   if (_data) return _data;
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    _data = require("@/generated/legislation-data.json") as LegislationDataset;
+    const raw = require("@/generated/legislation-data.json");
+    const parsed = LegislationDatasetSchema.safeParse(raw);
+    if (!parsed.success) {
+      console.error("legislation-data.json schema validation failed:", parsed.error.issues.slice(0, 5));
+      _data = raw as LegislationDataset;
+    } else {
+      _data = parsed.data;
+    }
     return _data;
   } catch {
     console.warn("legislation-data.json not found — returning empty data");

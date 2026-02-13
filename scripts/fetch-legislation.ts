@@ -120,7 +120,7 @@ async function main() {
 
   const slugs = Object.keys(EU_COUNTRIES);
 
-  const results = await processBatch(
+  const { results, succeeded, failed } = await processBatch(
     slugs,
     CONCURRENCY,
     async (slug) => {
@@ -140,6 +140,8 @@ async function main() {
       return legislation;
     }
   );
+
+  console.log(`  Batch results: ${succeeded} succeeded, ${failed} failed`);
 
   const countries: CountryLegislation[] = results.filter(
     (r): r is CountryLegislation => r !== null

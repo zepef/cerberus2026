@@ -115,7 +115,7 @@ export function EUMap({ countries, maxCases }: EUMapProps) {
   }
 
   return (
-    <div className="map-glass relative overflow-hidden">
+    <div className="map-glass relative overflow-hidden" role="img" aria-label="Interactive map of EU member states colored by corruption case count. Click a country to view details.">
       <ComposableMap
         projection="geoAzimuthalEqualArea"
         projectionConfig={PROJECTION_CONFIG}

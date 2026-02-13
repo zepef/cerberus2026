@@ -273,7 +273,7 @@ async function main() {
   const slugs = Object.keys(EU_COUNTRIES);
   const allEntities: EntityData[] = [];
 
-  const results = await processBatch(
+  const { results, succeeded, failed } = await processBatch(
     slugs,
     CONCURRENCY,
     async (slug) => {
@@ -292,6 +292,8 @@ async function main() {
   for (const countryEntities of results) {
     allEntities.push(...countryEntities);
   }
+
+  console.log(`  Batch results: ${succeeded} succeeded, ${failed} failed`);
 
   console.log(`\n[RESOLVE] Resolving connections across ${allEntities.length} entities...`);
   resolveConnections(allEntities);

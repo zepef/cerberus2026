@@ -127,7 +127,7 @@ export function RelationshipGraph({ nodes, edges }: RelationshipGraphProps) {
   }, []);
 
   return (
-    <div ref={containerRef} className="graph-glass relative rounded-2xl overflow-hidden">
+    <div ref={containerRef} className="graph-glass relative rounded-2xl overflow-hidden" role="img" aria-label="Interactive force-directed graph showing relationships between tracked entities. Click a node to view entity details.">
       {/* Controls toggle */}
       <button
         onClick={() => setShowControls((v) => !v)}

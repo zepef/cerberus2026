@@ -13,6 +13,7 @@ export function MapTooltip({ name, caseCount, x, y, visible }: MapTooltipProps) 
 
   return (
     <div
+      role="tooltip"
       className="glass-strong pointer-events-none fixed z-50 rounded-lg px-3 py-2 text-sm"
       style={{
         left: x + 12,

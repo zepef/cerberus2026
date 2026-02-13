@@ -4,6 +4,7 @@ import type {
   EntitySummary,
   GraphData,
 } from "@/app/lib/types";
+import { EntityDatasetSchema } from "./schemas";
 
 // Import the generated JSON — resolved at build time
 let _data: EntityDataset | null = null;
@@ -12,7 +13,14 @@ function loadData(): EntityDataset {
   if (_data) return _data;
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    _data = require("@/generated/entity-data.json") as EntityDataset;
+    const raw = require("@/generated/entity-data.json");
+    const parsed = EntityDatasetSchema.safeParse(raw);
+    if (!parsed.success) {
+      console.error("entity-data.json schema validation failed:", parsed.error.issues.slice(0, 5));
+      _data = raw as EntityDataset;
+    } else {
+      _data = parsed.data;
+    }
     return _data;
   } catch {
     console.warn("entity-data.json not found — returning empty data");
@@ -23,6 +31,25 @@ function loadData(): EntityDataset {
       generatedAt: "",
     };
   }
+}
+
+/** Convert an EntityData to an EntitySummary */
+function toSummary(e: EntityData): EntitySummary {
+  return {
+    slug: e.slug,
+    type: e.type,
+    name: e.name,
+    countrySlug: e.countrySlug,
+    countryName: e.countryName,
+    status: e.status,
+    role: e.role,
+    initials: e.initials,
+    imageUrl: e.imageUrl,
+    profileTitle: e.profileTitle ?? null,
+    profileSummary: e.profileSummary ?? null,
+    connectionCount: e.connections.length,
+    caseCount: e.cases.length,
+  };
 }
 
 /** Full entity dataset */
@@ -37,21 +64,7 @@ export function getAllEntities(): EntityData[] {
 
 /** Summaries for index page (lightweight) */
 export function getEntitySummaries(): EntitySummary[] {
-  return loadData().entities.map((e) => ({
-    slug: e.slug,
-    type: e.type,
-    name: e.name,
-    countrySlug: e.countrySlug,
-    countryName: e.countryName,
-    status: e.status,
-    role: e.role,
-    initials: e.initials,
-    imageUrl: e.imageUrl,
-    profileTitle: e.profileTitle ?? null,
-    profileSummary: e.profileSummary ?? null,
-    connectionCount: e.connections.length,
-    caseCount: e.cases.length,
-  }));
+  return loadData().entities.map(toSummary);
 }
 
 /** Full entity by slug (e.g., "individual/kurz-sebastian") */
@@ -71,21 +84,7 @@ export function getAllEntitySlugs(): { type: string; slug: string }[] {
 export function getEntitiesByCountry(countrySlug: string): EntitySummary[] {
   return loadData()
     .entities.filter((e) => e.countrySlug === countrySlug)
-    .map((e) => ({
-      slug: e.slug,
-      type: e.type,
-      name: e.name,
-      countrySlug: e.countrySlug,
-      countryName: e.countryName,
-      status: e.status,
-      role: e.role,
-      initials: e.initials,
-      imageUrl: e.imageUrl,
-      profileTitle: e.profileTitle ?? null,
-      profileSummary: e.profileSummary ?? null,
-      connectionCount: e.connections.length,
-      caseCount: e.cases.length,
-    }));
+    .map(toSummary);
 }
 
 /** Graph data for the relationship visualization */

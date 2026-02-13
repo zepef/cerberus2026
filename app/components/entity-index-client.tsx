@@ -58,6 +58,7 @@ export function EntityIndexClient({ entities }: EntityIndexClientProps) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
           <Input
+            aria-label="Search entities"
             placeholder="Search entities..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -65,6 +66,7 @@ export function EntityIndexClient({ entities }: EntityIndexClientProps) {
           />
         </div>
         <select
+          aria-label="Filter by entity type"
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value as EntityType | "all")}
           className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none"
@@ -76,6 +78,7 @@ export function EntityIndexClient({ entities }: EntityIndexClientProps) {
           ))}
         </select>
         <select
+          aria-label="Filter by status"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as EntityStatus | "all")}
           className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none"
