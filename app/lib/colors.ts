@@ -64,6 +64,15 @@ export const LEGISLATION_IMPACT_COLORS: Record<string, { bg: string; text: strin
   low: { bg: "bg-emerald-500/20", text: "text-emerald-300" },
 };
 
+// FocusPoint status badge colors
+export const FOCUSPOINT_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+  new: { bg: "bg-cyan-500/20", text: "text-cyan-300" },
+  investigating: { bg: "bg-amber-500/20", text: "text-amber-300" },
+  "findings-available": { bg: "bg-green-500/20", text: "text-green-300" },
+  completed: { bg: "bg-blue-500/20", text: "text-blue-300" },
+  stale: { bg: "bg-zinc-500/20", text: "text-zinc-300" },
+};
+
 // Status badge colors
 export const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   ongoing: { bg: "bg-amber-500/20", text: "text-amber-300" },

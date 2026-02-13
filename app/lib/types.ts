@@ -198,3 +198,74 @@ export interface LegislationDataset {
   allSectors: string[];
   generatedAt: string;
 }
+
+// --- FocusPoint types ---
+
+export type FocusPointStatus =
+  | "new"
+  | "investigating"
+  | "findings-available"
+  | "completed"
+  | "stale";
+
+export interface FocusPointAttachment {
+  filename: string;
+  path: string;
+  sizeBytes: number;
+}
+
+export interface FocusPointFinding {
+  title: string;
+  date: string | null;
+  summary: string[];
+  sources: string[];
+  relevance: string | null;
+}
+
+export interface FocusPointTimelineEntry {
+  date: string;
+  event: string;
+  source: string | null;
+}
+
+export interface FocusPointEntityRef {
+  displayName: string;
+  entitySlug: string | null;
+  role: string | null;
+}
+
+export interface FocusPointData {
+  slug: string;
+  title: string;
+  status: FocusPointStatus;
+  createdAt: string;
+  submittedBy: string;
+  description: string[];
+  links: string[];
+  attachments: FocusPointAttachment[];
+  searchDirectives: string[];
+  findings: FocusPointFinding[];
+  timeline: FocusPointTimelineEntry[];
+  linkedEntities: FocusPointEntityRef[];
+  sources: string[];
+  rawPlanMarkdown: string;
+  hasBotData: boolean;
+}
+
+export interface FocusPointSummary {
+  slug: string;
+  title: string;
+  status: FocusPointStatus;
+  createdAt: string;
+  description: string;
+  linkCount: number;
+  attachmentCount: number;
+  findingCount: number;
+  hasBotData: boolean;
+}
+
+export interface FocusPointDataset {
+  focuspoints: FocusPointData[];
+  totalFocusPoints: number;
+  generatedAt: string;
+}

@@ -41,6 +41,18 @@ export function Header() {
           >
             Network
           </Link>
+          <Link
+            href="/focuspoints"
+            className="text-sm text-zinc-400 transition-colors hover:text-white"
+          >
+            FocusPoints
+          </Link>
+          <Link
+            href="/submit"
+            className="text-sm text-orange-400 transition-colors hover:text-orange-300"
+          >
+            Submit
+          </Link>
         </nav>
       </div>
     </header>

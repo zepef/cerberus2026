@@ -149,3 +149,59 @@ export const LegislationDatasetSchema = z.object({
   allSectors: z.array(z.string()),
   generatedAt: z.string(),
 });
+
+// --- FocusPoint data schemas ---
+
+const FocusPointStatusSchema = z.enum([
+  "new", "investigating", "findings-available", "completed", "stale",
+]);
+
+const FocusPointAttachmentSchema = z.object({
+  filename: z.string(),
+  path: z.string(),
+  sizeBytes: z.number(),
+});
+
+const FocusPointFindingSchema = z.object({
+  title: z.string(),
+  date: z.string().nullable(),
+  summary: z.array(z.string()),
+  sources: z.array(z.string()),
+  relevance: z.string().nullable(),
+});
+
+const FocusPointTimelineEntrySchema = z.object({
+  date: z.string(),
+  event: z.string(),
+  source: z.string().nullable(),
+});
+
+const FocusPointEntityRefSchema = z.object({
+  displayName: z.string(),
+  entitySlug: z.string().nullable(),
+  role: z.string().nullable(),
+});
+
+const FocusPointDataSchema = z.object({
+  slug: z.string(),
+  title: z.string(),
+  status: FocusPointStatusSchema,
+  createdAt: z.string(),
+  submittedBy: z.string(),
+  description: z.array(z.string()),
+  links: z.array(z.string()),
+  attachments: z.array(FocusPointAttachmentSchema),
+  searchDirectives: z.array(z.string()),
+  findings: z.array(FocusPointFindingSchema),
+  timeline: z.array(FocusPointTimelineEntrySchema),
+  linkedEntities: z.array(FocusPointEntityRefSchema),
+  sources: z.array(z.string()),
+  rawPlanMarkdown: z.string(),
+  hasBotData: z.boolean(),
+});
+
+export const FocusPointDatasetSchema = z.object({
+  focuspoints: z.array(FocusPointDataSchema),
+  totalFocusPoints: z.number(),
+  generatedAt: z.string(),
+});

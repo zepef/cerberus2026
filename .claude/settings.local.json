@@ -54,7 +54,12 @@
       "Bash(cat:*)",
       "Bash(npx tsc:*)",
       "Bash(if exist \"E:\\\\Projects\\\\cerberus2026\\\\generated\\\\corruption-data.json\" echo \"corruption-data exists\" else echo \"no corruption data\")",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "mcp__claude_ai_Vercel__list_deployments",
+      "mcp__claude_ai_Vercel__get_deployment_build_logs",
+      "Bash(wc:*)",
+      "Bash(del:*)",
+      "Bash(npx next build:*)"
     ]
   }
 }

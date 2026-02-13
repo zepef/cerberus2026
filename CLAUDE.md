@@ -5,19 +5,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 - `npm run dev` — Start development server (data must be fetched first)
-- `npm run build` — Production build (runs fetch-data + fetch-entities + fetch-legislation + next build)
+- `npm run build` — Production build (runs fetch-data + fetch-entities + fetch-legislation + fetch-focuspoints + next build)
 - `npm start` — Start production server
 - `npm run lint` — Run ESLint
 - `npm run fetch-data` — Fetch corruption data from GitHub (requires GITHUB_PAT)
 - `npm run fetch-entities` — Fetch entity data from GitHub (requires GITHUB_PAT)
 - `npm run fetch-legislation` — Fetch legislation data from GitHub (requires GITHUB_PAT; runs after fetch-entities)
+- `npm run fetch-focuspoints` — Fetch focuspoint data from GitHub (requires GITHUB_PAT)
 
 No test framework is configured.
 
 ### First-time setup
 
 1. Create `.env.local` with `GITHUB_PAT=<token>` (scripts read this file manually, not via Next.js env)
-2. Run `npm run fetch-data && npm run fetch-entities && npm run fetch-legislation` to populate `generated/` (gitignored)
+2. Run `npm run fetch-data && npm run fetch-entities && npm run fetch-legislation && npm run fetch-focuspoints` to populate `generated/` (gitignored)
 3. Then `npm run dev` — without step 2, the app renders with empty data (accessors return safe defaults)
 
 ## Architecture
@@ -37,6 +38,13 @@ Scripts fetch markdown from `zepef/botexchange` via GitHub API, parse with unifi
 - `app/data/corruption-data.ts` — Accessor functions for corruption JSON
 - `app/data/entity-data.ts` — Accessor functions for entity JSON
 - `app/data/legislation-data.ts` — Accessor functions for legislation JSON
+- `scripts/lib/github-write.ts` — GitHub Contents API write utility (PUT files)
+- `scripts/parse-focuspoint.ts` — Parses focuspoint markdown (plan, findings, timeline, entities, sources)
+- `scripts/fetch-focuspoints.ts` — Fetches focuspoint data from `cerberus/focuspoints/` → `generated/focuspoint-data.json`
+- `app/data/focuspoint-data.ts` — Accessor functions for focuspoint JSON
+
+### API Routes
+- `app/api/focuspoint/route.ts` — POST endpoint for FocusPoint submissions (creates plan.md + attachments in botexchange repo via GitHub API)
 
 ### App Structure
 - `app/page.tsx` — Dashboard with interactive EU heat map and stats
@@ -45,7 +53,10 @@ Scripts fetch markdown from `zepef/botexchange` via GitHub API, parse with unifi
 - `app/entity/[type]/[slug]/page.tsx` — Entity profile pages (SSG via generateStaticParams)
 - `app/legislation/page.tsx` — Filterable legislation index page
 - `app/graph/page.tsx` — Interactive force-directed relationship graph
-- `app/components/` — App-specific UI components (eu-map, case-list, entity-*, legislation-*, graph-*, header, stats-bar)
+- `app/focuspoints/page.tsx` — Filterable FocusPoint index page
+- `app/focuspoint/[slug]/page.tsx` — FocusPoint detail pages (SSG via generateStaticParams)
+- `app/submit/page.tsx` — FocusPoint submission form
+- `app/components/` — App-specific UI components (eu-map, case-list, entity-*, legislation-*, focuspoint-*, graph-*, header, stats-bar)
 - `components/ui/` — shadcn/ui primitives (Card, Badge, Tooltip, Separator, ScrollArea, Button, Input, Select, Tabs)
 - `app/lib/types.ts` — TypeScript interfaces for all data shapes
 - `app/lib/constants.ts` — EU country slug→name→ISO mapping (Eurostat convention: Greece=EL)
@@ -68,4 +79,6 @@ Scripts fetch markdown from `zepef/botexchange` via GitHub API, parse with unifi
 - **Graph component:** Must be loaded client-side only (ssr:false via graph-wrapper.tsx) because react-force-graph-2d uses Canvas
 - **Greece edge case:** Eurostat uses ISO code `EL`, not `GR`. Handled in constants.ts
 - **Entity slugs:** Format is `{type}/{name-slug}` (e.g., `individual/kurz-sebastian`)
-- **Data fetching:** Always commit and push after running fetch scripts (`fetch-data`, `fetch-entities`, `fetch-legislation`) if they produce any tracked file changes
+- **FocusPoint slugs:** Auto-generated from title with timestamp suffix (e.g., `suspicious-contract-abc123`)
+- **FocusPoint submission:** POST `/api/focuspoint` creates files at `cerberus/focuspoints/{slug}/` in botexchange repo. Requires `GITHUB_PAT` env var (Vercel).
+- **Data fetching:** Always commit and push after running fetch scripts (`fetch-data`, `fetch-entities`, `fetch-legislation`, `fetch-focuspoints`) if they produce any tracked file changes
